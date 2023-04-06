@@ -76,8 +76,8 @@ resource app 'Microsoft.App/containerApps@2022-10-01' = {
               value: applicationInsights.properties.ConnectionString
             }]
           resources: {
-              cpu: json('0.25')
-              memory: '.5Gi'
+              cpu: json('1')
+              memory: '2Gi'
           }
         
         }
