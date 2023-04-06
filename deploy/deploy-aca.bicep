@@ -41,7 +41,7 @@ resource app 'Microsoft.App/containerApps@2022-10-01' = {
       containers: [
         {
           name: 'perftest'
-          image: '${acr.properties.loginServer}/perftest:v1'          
+          image: '${acr.properties.loginServer}/perftest:v2'          
           resources: {
               cpu: json('.25')
               memory: '.5Gi'
@@ -50,13 +50,13 @@ resource app 'Microsoft.App/containerApps@2022-10-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 10
+        maxReplicas: 100
         rules: [
           {
             name: 'http-rule'
             http: {
               metadata: {
-                concurrentRequests: '1000'
+                concurrentRequests: '50'
               }
             }
           }
