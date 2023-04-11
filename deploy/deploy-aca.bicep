@@ -41,6 +41,34 @@ resource env 'Microsoft.App/managedEnvironments@2022-10-01' = {
       }
     }
 }
+/*
+resource env2 'Microsoft.App/managedEnvironments@2022-10-01' = {
+  name: '${acaName}-2'
+  location: location
+  properties: {
+      appLogsConfiguration:{
+        logAnalyticsConfiguration: {
+          customerId: workspace.properties.customerId
+          sharedKey: workspace.listKeys().primarySharedKey
+        }
+        destination: 'log-analytics'
+      }
+    }
+}
+resource env3 'Microsoft.App/managedEnvironments@2022-10-01' = {
+  name: '${acaName}-3'
+  location: location
+  properties: {
+      appLogsConfiguration:{
+        logAnalyticsConfiguration: {
+          customerId: workspace.properties.customerId
+          sharedKey: workspace.listKeys().primarySharedKey
+        }
+        destination: 'log-analytics'
+      }
+    }
+}
+*/
 
 resource app 'Microsoft.App/containerApps@2022-10-01' = {
   name: acaName
@@ -100,6 +128,124 @@ resource app 'Microsoft.App/containerApps@2022-10-01' = {
     }
   }
 }
+/*
+resource app2 'Microsoft.App/containerApps@2022-10-01' = {
+  name: '${acaName}-2'
+  location: location
+  properties: {
+    environmentId: env2.id
+    configuration:{
+      ingress:{
+        external: true
+        targetPort: 80        
+      }
+      secrets: [
+        {
+          name: 'registry-pwd'
+          value: acr.listCredentials().passwords[0].value
+        }
+      ]
+      registries: [
+        {
+          server: acr.properties.loginServer
+          username: acr.listCredentials().username
+          passwordSecretRef: 'registry-pwd'
+        }
+      ]
+    }
+    template:{
+      containers: [
+        {
+          name: 'perftest'
+          image: '${acr.properties.loginServer}/perftest:v2'
+          env: [
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              value: applicationInsights.properties.ConnectionString
+            }]
+          resources: {
+              cpu: json('1')
+              memory: '2Gi'
+          }
+        
+        }
+      ]
+      scale: {
+        minReplicas: 3
+        maxReplicas: 30
+        rules: [
+          {
+            name: 'http-rule'
+            http: {
+              metadata: {
+                concurrentRequests: '100'
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+resource app3 'Microsoft.App/containerApps@2022-10-01' = {
+  name: '${acaName}-3'
+  location: location
+  properties: {
+    environmentId: env3.id
+    configuration:{
+      ingress:{
+        external: true
+        targetPort: 80        
+      }
+      secrets: [
+        {
+          name: 'registry-pwd'
+          value: acr.listCredentials().passwords[0].value
+        }
+      ]
+      registries: [
+        {
+          server: acr.properties.loginServer
+          username: acr.listCredentials().username
+          passwordSecretRef: 'registry-pwd'
+        }
+      ]
+    }
+    template:{
+      containers: [
+        {
+          name: 'perftest'
+          image: '${acr.properties.loginServer}/perftest:v2'
+          env: [
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              value: applicationInsights.properties.ConnectionString
+            }]
+          resources: {
+              cpu: json('1')
+              memory: '2Gi'
+          }
+        
+        }
+      ]
+      scale: {
+        minReplicas: 3
+        maxReplicas: 30
+        rules: [
+          {
+            name: 'http-rule'
+            http: {
+              metadata: {
+                concurrentRequests: '100'
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+*/
 
 resource fd 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
   name: fdName
@@ -108,7 +254,7 @@ resource fd 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
     name: 'Standard_AzureFrontDoor'
   }
   properties: {
-    originResponseTimeoutSeconds: 60
+    originResponseTimeoutSeconds: 180
   }
 }
 
@@ -129,12 +275,12 @@ resource fdOriginGroupDefault 'Microsoft.Cdn/profiles/originGroups@2022-11-01-pr
       probeProtocol: 'Https'
       probePath: '/testsimple'
       probeRequestType: 'GET'
-      probeIntervalInSeconds: 100
+      probeIntervalInSeconds: 5
     }
     loadBalancingSettings: {
       sampleSize: 4
-      successfulSamplesRequired: 3
-      additionalLatencyInMilliseconds: 50
+      successfulSamplesRequired: 4
+      additionalLatencyInMilliseconds: 0
     }
   }
 }
@@ -148,12 +294,41 @@ resource fdOriginDefault 'Microsoft.Cdn/profiles/originGroups/origins@2022-11-01
     httpsPort: 443
     originHostHeader: app.properties.configuration.ingress.fqdn
     priority: 1
-    weight: 1000
+    weight: 40
     enabledState: 'Enabled'    
     enforceCertificateNameCheck: true
   }
 }
-
+/*
+resource fdOriginDefault2 'Microsoft.Cdn/profiles/originGroups/origins@2022-11-01-preview' = {
+  parent: fdOriginGroupDefault
+  name: 'default-origin-2'
+  properties: {
+    hostName: app2.properties.configuration.ingress.fqdn
+    httpPort: 80
+    httpsPort: 443
+    originHostHeader: app2.properties.configuration.ingress.fqdn
+    priority: 1
+    weight: 30
+    enabledState: 'Enabled'    
+    enforceCertificateNameCheck: true
+  }
+}
+resource fdOriginDefault3 'Microsoft.Cdn/profiles/originGroups/origins@2022-11-01-preview' = {
+  parent: fdOriginGroupDefault
+  name: 'default-origin-3'
+  properties: {
+    hostName: app3.properties.configuration.ingress.fqdn
+    httpPort: 80
+    httpsPort: 443
+    originHostHeader: app3.properties.configuration.ingress.fqdn
+    priority: 1
+    weight: 30
+    enabledState: 'Enabled'    
+    enforceCertificateNameCheck: true
+  }
+}
+*/
 resource fdRouteDefault 'Microsoft.Cdn/profiles/afdendpoints/routes@2022-11-01-preview' = {
   parent: fdEndpoint1
   name: 'default-route'
