@@ -128,7 +128,7 @@ resource fdOriginGroupDefault 'Microsoft.Cdn/profiles/originGroups@2022-11-01-pr
     healthProbeSettings: {
       probeProtocol: 'Https'
       probePath: '/testsimple'
-      probeRequestType: 'HEAD'
+      probeRequestType: 'GET'
       probeIntervalInSeconds: 100
     }
     loadBalancingSettings: {
