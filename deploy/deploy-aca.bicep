@@ -1,5 +1,6 @@
 param acaName string = 'jjazacaperf'
 param acrName string = 'jjazacrperf'
+param fdName string = 'jjazfdperf'
 param workspaceName string = 'jjazlogsperf'
 param applicationInsightsName string = 'jjazlogsaiperf'
 param location string = 'Sweden Central'
@@ -97,5 +98,78 @@ resource app 'Microsoft.App/containerApps@2022-10-01' = {
         ]
       }
     }
+  }
+}
+
+resource fd 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
+  name: fdName
+  location: 'global'
+  sku: {
+    name: 'Standard_AzureFrontDoor'
+  }
+  properties: {
+    originResponseTimeoutSeconds: 60
+  }
+}
+
+resource fdEndpoint1 'Microsoft.Cdn/profiles/afdEndpoints@2022-11-01-preview' = {
+  parent: fd
+  name: fdName
+  location: 'global'
+  properties: {
+    enabledState: 'Enabled'
+  }
+}
+
+resource fdOriginGroupDefault 'Microsoft.Cdn/profiles/originGroups@2022-11-01-preview' = {
+  parent: fd
+  name: 'default-origin-group'
+  properties: {
+    healthProbeSettings: {
+      probeProtocol: 'Https'
+      probePath: '/testsimple'
+      probeRequestType: 'HEAD'
+      probeIntervalInSeconds: 100
+    }
+    loadBalancingSettings: {
+      sampleSize: 4
+      successfulSamplesRequired: 3
+      additionalLatencyInMilliseconds: 50
+    }
+  }
+}
+
+resource fdOriginDefault 'Microsoft.Cdn/profiles/originGroups/origins@2022-11-01-preview' = {
+  parent: fdOriginGroupDefault
+  name: 'default-origin'
+  properties: {
+    hostName: app.properties.configuration.ingress.fqdn
+    httpPort: 80
+    httpsPort: 443
+    originHostHeader: app.properties.configuration.ingress.fqdn
+    priority: 1
+    weight: 1000
+    enabledState: 'Enabled'    
+    enforceCertificateNameCheck: true
+  }
+}
+
+resource fdRouteDefault 'Microsoft.Cdn/profiles/afdendpoints/routes@2022-11-01-preview' = {
+  parent: fdEndpoint1
+  name: 'default-route'
+  properties: {
+    originGroup: {
+      id: fdOriginGroupDefault.id
+    }
+    enabledState: 'Enabled'
+    forwardingProtocol: 'HttpsOnly'
+    linkToDefaultDomain: 'Enabled'
+    httpsRedirect: 'Enabled'
+    supportedProtocols: [
+      'Https'
+    ]
+    patternsToMatch: [
+      '/*'
+    ]
   }
 }
