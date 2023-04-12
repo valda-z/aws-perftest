@@ -4,6 +4,7 @@ metadata:
   name: perftest
   namespace: perftest
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: perftest
@@ -21,12 +22,12 @@ spec:
               - key: agentpool
                 operator: In
                 values:
-                - agentpool
+                - nodepool1
       imagePullSecrets:
       - name: regcred
       containers:
         - name: perftest
-          image: novapocaksregistry.azurecr.io/perftest:v2
+          image:  jjazacrperf.azurecr.io/perftest:v2
           ports:
             - containerPort: 80
           resources:
@@ -39,7 +40,6 @@ spec:
       tolerations:
       - key: virtual-kubelet.io/provider
         operator: Exists
-        replicas: 1
       topologySpreadConstraints:
       - maxSkew: 1
         nodeAffinityPolicy: Honor

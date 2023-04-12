@@ -18,8 +18,15 @@ docker login -u aci-access -p <password_from_json> jjazacrperf.azurecr.io
 kubectl create namespace perftest
 kubectl --namespace=perftest create secret generic regcred --from-file=.dockerconfigjson=/home/<your_profile>/.docker/config.json --type=kubernetes.io/dockerconfigjson
 
-# deploy deployment
-kubectl apply -f deploy-aks-deployment.yaml
-
+# deploy deployment and autoscale
+# ! fix registry name and agentpool name
+kubectl apply -f .\deploy-aks-deployment.yaml
 kubectl autoscale deployment perftest --cpu-percent=25 --min=8 --max=32 -n perftest
 
+# get pods and run test to external-ip
+kubectl get hpa -n perftest
+kubectl get pods -n perftest -o wide
+kubectl get svc -n perftest -o wide
+
+# run test
+http://<external-ip>/test
