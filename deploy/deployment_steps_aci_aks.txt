@@ -1,0 +1,17 @@
+Create Token in Container registry assigned to AKS with pull permissions
+
+Login to remote container registry with the token (it will automatically create config.json credentials file):
+	docker login
+
+Create secret in correct namespace: 
+	kubectl --namespace=perftest create secret generic regcred --from-file=.dockerconfigjson=/home/X/.docker/config.json --type=kubernetes.io/dockerconfigjson
+
+Create deployment, workload and ingress service based on the POD template
+
+Create HPA:
+	kubectl autoscale deployment perftest --cpu-percent=25 --min=8 --max=32 -n perftest
+
+now you should be able to schedule pods to default nodepool (with tag agentpool), when capacity of nodepool is exhausted it will use ACI to schedule more pods
+
+KNOWN ISSUES -> 
+scale down can sometimes keep alive ACI pods instead nodepool pods, forced redeploy will help 
