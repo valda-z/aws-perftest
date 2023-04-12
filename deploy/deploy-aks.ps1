@@ -30,3 +30,7 @@ kubectl get svc -n perftest -o wide
 
 # run test
 http://<external-ip>/test
+
+# scaledown
+kubectl delete hpa perftest -n perftest
+kubectl scale deploy -n perftest --replicas=1 --all
