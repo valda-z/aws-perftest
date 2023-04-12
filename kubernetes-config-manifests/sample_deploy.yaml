@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample
+  namespace: perftest
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: sample
+  template:
+    metadata:
+      labels:
+        app: sample
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - sample
+              topologyKey: topology.kubernetes.io/hostname
+        # nodeAffinity:
+          # preferredDuringSchedulingIgnoredDuringExecution:
+          # - weight: 100
+            # preference:
+              # matchExpressions:
+              # - key: agentpool
+                # operator: In
+                # values:
+                # - mariner
+      
+      # imagePullSecrets:
+      # - name: regcred
+      
+      containers:
+        - name: sample
+          image: novaperftest.azurecr.io/novatest:latest
+          imagePullPolicy: Always
+          ports:
+            - name: web
+              containerPort: 80
+              protocol: TCP
+          resources:
+            requests:
+              cpu: '1.5'
+              memory: 1512M
+            limits:
+              cpu: '2'
+              memory: 1512M
+          readinessProbe:
+            httpGet:
+              path: /test
+              port: 80
+            successThreshold: 1
+            periodSeconds: 5
+      # tolerations:
+      # - key: virtual-kubelet.io/provider
+        # operator: Exists
+        # replicas: 1
+      # topologySpreadConstraints:
+      # - maxSkew: 1
+        # nodeAffinityPolicy: Honor
+        # topologyKey: kubernetes.io/hostname
+        # whenUnsatisfiable: ScheduleAnyway          
