@@ -44,6 +44,8 @@ nupkg/
 # Rider
 .idea
 
+.env
+
 # User-specific files
 *.suo
 *.user
