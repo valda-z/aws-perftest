@@ -55,6 +55,14 @@ module "alb" {
    backend_port         = local.container_port
    backend_protocol     = "HTTP"
    target_type          = "ip"
+   health_check         = {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 10
+    path                = "/testsimple"
+    matcher             = "200-299"
+   }
   }
  ]
 }

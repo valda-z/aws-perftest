@@ -45,6 +45,10 @@ nupkg/
 .idea
 
 .env
+*.tfstate
+*.tfstate.backup
+.terraform
+.terraform*
 
 # User-specific files
 *.suo

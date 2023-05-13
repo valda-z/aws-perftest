@@ -44,10 +44,10 @@ resource "aws_ecs_task_definition" "this" {
   name = local.container_name,
   portMappings = [{ containerPort = local.container_port }],
  }])
- cpu = "512"
+ cpu = "1024"
  execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
  family = "family-of-perftest-tasks"
- memory = "1024"
+ memory = "2048"
  network_mode = "awsvpc"
  requires_compatibilities = ["FARGATE"]
 }
@@ -77,7 +77,7 @@ resource "aws_ecs_service" "this" {
 
 resource "aws_appautoscaling_target" "this" {
   max_capacity       = 64
-  min_capacity       = 1
+  min_capacity       = 2
   resource_id        = "service/${module.ecs.cluster_name}/${aws_ecs_service.this.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
@@ -94,7 +94,7 @@ resource "aws_appautoscaling_policy" "this" {
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
-    target_value       = 75.0
+    target_value       = 70.0
     scale_in_cooldown  = 5
     scale_out_cooldown = 60
   }
