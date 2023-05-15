@@ -1,0 +1,105 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: aws-observability
+  labels:
+    aws-observability: enabled
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: aws-logging
+  namespace: aws-observability
+  #labels:
+data:
+  output.conf: |
+    [OUTPUT]
+        Name cloudwatch_logs
+        Match   *
+        region <us-east-1>
+        log_group_name fluent-bit-cloudwatch
+        log_stream_prefix from-fluent-bit-
+        auto_create_group true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: perftest
+  namespace: perftest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: perftest
+  template:
+    metadata:
+      labels:
+        app: perftest
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: agentpool
+                operator: In
+                values:
+                - nodepool1
+      imagePullSecrets:
+      - name: regcred
+      containers:
+        - name: perftest
+          image:  507187134850.dkr.ecr.eu-west-1.amazonaws.com/perftest:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: '1'
+              memory: 1G
+            limits:
+              cpu: '1'
+              memory: 1G
+      tolerations:
+      - key: virtual-kubelet.io/provider
+        operator: Exists
+      topologySpreadConstraints:
+      - maxSkew: 1
+        nodeAffinityPolicy: Honor
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: perftest-service
+  namespace: perftest
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: '2'
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout: '5'
+spec:
+  type: LoadBalancer
+  ports:
+    - targetPort: 80
+      name: port80
+      port: 80
+      protocol: TCP
+  selector:
+    app: perftest
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-perftest
+  namespace: perftest
+spec:
+  maxReplicas: 32
+  minReplicas: 8
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: perftest
+  targetCPUUtilizationPercentage: 60

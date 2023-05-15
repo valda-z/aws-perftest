@@ -15,8 +15,8 @@ module "alb" {
  source  = "terraform-aws-modules/alb/aws"
  version = "~> 8.4.0"
 
- load_balancer_type = "application"
- security_groups = [module.vpc.default_security_group_id]
+ load_balancer_type = "network" // "application"
+ // security_groups = [module.vpc.default_security_group_id]
  subnets = module.vpc.public_subnets
  vpc_id = module.vpc.vpc_id
 
@@ -45,7 +45,7 @@ module "alb" {
    # * traffic to target_groups[0] defined below which
    # * will eventually point to our "Hello World" app.
    port               = 80
-   protocol           = "HTTP"
+   protocol           = "TCP" // "HTTP"
    target_group_index = 0
   }
  ]
@@ -53,11 +53,11 @@ module "alb" {
  target_groups = [
   {
    backend_port         = local.container_port
-   backend_protocol     = "HTTP"
+   backend_protocol     = "TCP" // "HTTP"
    target_type          = "ip"
    health_check         = {
     healthy_threshold   = 2
-    unhealthy_threshold = 2
+    unhealthy_threshold = 10
     timeout             = 5
     interval            = 10
     path                = "/testsimple"
@@ -65,4 +65,13 @@ module "alb" {
    }
   }
  ]
+}
+
+resource "aws_security_group_rule" "http" {
+  security_group_id = module.vpc.default_security_group_id
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
 }
