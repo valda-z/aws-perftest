@@ -73,10 +73,10 @@ metadata:
   name: hpa-perftest
   namespace: perftest
 spec:
-  maxReplicas: 32
-  minReplicas: 1
+  maxReplicas: 128
+  minReplicas: 16
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: perftest
-  targetCPUUtilizationPercentage: 25
+  targetCPUUtilizationPercentage: 10
