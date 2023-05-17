@@ -1,26 +1,3 @@
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: aws-observability
-  labels:
-    aws-observability: enabled
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: aws-logging
-  namespace: aws-observability
-  #labels:
-data:
-  output.conf: |
-    [OUTPUT]
-        Name cloudwatch_logs
-        Match   *
-        region <us-east-1>
-        log_group_name fluent-bit-cloudwatch
-        log_stream_prefix from-fluent-bit-
-        auto_create_group true
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -97,9 +74,9 @@ metadata:
   namespace: perftest
 spec:
   maxReplicas: 32
-  minReplicas: 8
+  minReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: perftest
-  targetCPUUtilizationPercentage: 60
+  targetCPUUtilizationPercentage: 25
