@@ -138,7 +138,7 @@ resource "helm_release" "alb_controller" {
   namespace        = "kube-system"
   create_namespace = false
 
-  name                = "eks"
+  name                = "alb-controller"
   repository          = "https://aws.github.io/eks-charts"
   chart               = "aws-load-balancer-controller"
 
@@ -183,6 +183,7 @@ resource "helm_release" "karpenter" {
     name  = "settings.aws.interruptionQueueName"
     value = module.karpenter.queue_name
   }
+  
 }
 
 resource "kubectl_manifest" "karpenter_provisioner" {
